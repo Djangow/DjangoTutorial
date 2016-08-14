@@ -24,9 +24,16 @@ class QuestionMethodTests(TestCase):
         self.assertIs(recent_question.was_published_recently(), True)
 
 
+'''def create_question(question_text, days):
+    time = timezone.now() + datetime.timedelta(days=days)
+    return Question.objects.create(question_text=question_text, pub_date=time)'''
+
+
 def create_question(question_text, days):
     time = timezone.now() + datetime.timedelta(days=days)
-    return Question.objects.create(question_text=question_text, pub_date=time)
+    q = Question.objects.create(question_text=question_text, pub_date=time)
+    q.choice_set.create(choice_text="Sim", votes=0)
+    return q
 
 
 class QuestionViewsTests(TestCase):
@@ -47,7 +54,7 @@ class QuestionViewsTests(TestCase):
         self.assertContains(response, "No polls are disponivel")
         self.assertQuerysetEqual(response.context['latest_question_list'], [])
 
-    def test_index_view_with_future_question_and_questioon(self):
+    def test_index_view_with_future_question_and_past_question(self):
         create_question(question_text="Past question.", days=-30)
         create_question(question_text="Future question.", days=30)
         response = self.client.get(reverse('polls:index'))
@@ -65,6 +72,21 @@ class QuestionViewsTests(TestCase):
             ['<Question: Past question 2.>', '<Question: Past question 1.>']
         )
 
+    def test_index_view_with_no_choice(self):
+        #create_question(question_text="Past question 1.", days=-30)
+        q = Question(question_text="No choice Question", pub_date=timezone.now())
+        q.save()
+        response = self.client.get(reverse('polls:index'))
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'], []
+        )
+
+    def test_index_view_with_choice(self):
+        create_question(question_text="Past question 1.", days=-30)
+        response = self.client.get(reverse('polls:index'))
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'], ['<Question: Past question 1.>']
+        )
 
 class QuestionIndexResultsTests(TestCase):
     def test_detail_view_with_a_future_question(self):
