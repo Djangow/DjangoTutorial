@@ -1,0 +1,7 @@
+li a {
+    color: green;
+    font-weight: bolder;
+}
+body {
+    background: white url("images/plane1.gif") no-repeat;
+}
